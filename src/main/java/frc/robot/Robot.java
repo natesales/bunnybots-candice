@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
@@ -20,6 +21,12 @@ public class Robot extends TimedRobot {
     // armB.setInverted(false);
 
     // armB.follow(armA);
+
+    armA.configForwardSoftLimitEnable(false);
+    armA.configReverseSoftLimitEnable(false);
+
+    armA.configPeakCurrentLimit(5);
+    armA.configPeakCurrentDuration(500);
 
     armA.setNeutralMode(NeutralMode.Brake);
     // armB.setNeutralMode(NeutralMode.Brake);
@@ -39,12 +46,25 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    armA.setSelectedSensorPosition(0);
   }
 
   @Override
   public void teleopPeriodic() {
-    double arm = driver.getY(Hand.kLeft);
-    armA.set(ControlMode.PercentOutput, arm);
+    double armPos = armA.getSelectedSensorPosition();
+    double armStick = driver.getY(Hand.kLeft);
+
+    SmartDashboard.putNumber("arm/encoder", armPos);
+    SmartDashboard.putNumber("arm/stick", armStick);
+    SmartDashboard.putNumber("arm/current", armA.getStatorCurrent());
+
+    if (armStick < 0 && armPos <= 1500) {
+      armA.set(ControlMode.PercentOutput, armStick);
+    } else if (armStick > 0 && armPos >= -10) {
+      armA.set(ControlMode.PercentOutput, armStick);
+    } else {
+      armA.set(ControlMode.PercentOutput, 0.0);
+    }
   }
 
   @Override
